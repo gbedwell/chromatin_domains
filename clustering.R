@@ -1,8 +1,8 @@
 source("funs.R")
 
 # Import the smoothed, normalized, and averaged data.
-dat <- global_hmm( paths = c( "son_data", "laminB1_data", "laminB1_DamID_data" ), 
-                   pattern = "combined.wig", 
+dat <- global_hmm( paths = c( "son_data", "laminB1_data", "laminB1_DamID_data" ),
+                   pattern = "combined.wig",
                    filter.chroms = c( "chrM", "chrY", "MT", "Y" ),
                    n.states = NULL,
                    fit.only = FALSE,
@@ -17,12 +17,12 @@ prop.var <- summary(pca)$importance
 # Define the threshold for which PCs to take for downstream analyses.
 # This is the minimum cumulative percentage of the variance explained desired.
 # This is not used currently.
-cutoff <- 0.90
+# cutoff <- 0.90
 
 # Get the index of the PC that matches the cutoff.
 # Not currently used.
-dims <- sort( which( prop.var[3,] <= cutoff ), decreasing = TRUE )[1]
-pc.dat <- pca$x[,1:dims]
+# dims <- sort( which( prop.var[3,] <= cutoff ), decreasing = TRUE )[1]
+# pc.dat <- pca$x[,1:dims]
 
 samp.rows <- sort( sample( 1:nrow(pc.dat), size = round( nrow(pc.dat) / 2 ) ) )
 
@@ -61,14 +61,20 @@ for ( i in seq_along(hc.state.order) ) {
 
 hc.trans.mat <- estimate_trans_mat( x = hc.states.new, n.states = nc )
 
+dend.dat <- dendro_data_k( hc = hc, k = nc )
+
 # Calculate within-cluster sum of squares across k's.
-k.max <- 15
+# k.max <- 15
+#
+# wcss <- elbow( data = dat,
+#                k.max = k.max,
+#                nstart = 100,
+#                iter.max = 1E6 )
 
-wcss <- elbow( data = dat,
-               k.max = k.max,
-               nstart = 100,
-               iter.max = 1E6 )
-
-save( list = ls( all.names = TRUE ), 
-      file = "slld_cluster.RData.gz", 
+save( list = ls( all.names = TRUE ),
+      file = "slld_cluster.RData.gz",
       compression_level = 6 )
+
+# save( dend.dat,
+#       file = "dend_dat_7.RData.gz",
+#       compression_level = 6 )

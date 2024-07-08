@@ -2,20 +2,20 @@
 
 #$ -S /bin/bash
 #$ -N align_tsa
-#$ -pe pvm 8
-#$ -l m_mem_free=24000M
-#$ -wd /mnt/storage/labs/aengelman/T2T/annotations/tsa_seq/
+#$ -pe pvm 20
+#$ -l m_mem_free=12G
+#$ -wd /home/gjb30/tsa_seq_hmm
 #$ -j n
 #$ -m bea
 #$ -M gregoryj_bedwell@dfci.harvard.edu
 
-bwa_path="/mnt/storage/apps/BWA/bwa-0.7.17/bwa"
+bt2_path="/mnt/storage/apps/bowtie2-2.5.2/bowtie2"
 samtools_path="/mnt/storage/apps/samtools/1.9/bin/samtools"
-f_index_prefix="/mnt/storage/labs/aengelman/T2T/genome_noY_bwa/chm13v2.0_noY.fa.gz"
-m_index_prefix="/mnt/storage/labs/aengelman/T2T/genome_bwa/chm13v2.0.fa.gz"
+f_index_prefix="/mnt/storage/labs/aengelman/T2T/genome_noY_bt2/chm13v2.0_noY"
+m_index_prefix="/mnt/storage/labs/aengelman/T2T/genome_bt2/chm13v2.0"
 rscript="/mnt/storage/apps/Downloads/R-4.2.1/bin/Rscript"
-id="<access_key_id>"
-secret="<access_key_secret>"
+id=<access_key_id>
+secret=<access_key_secret>
 
 echo "Parsing SON, LMNB1,and LMNB1 DamID metadata..."
 
@@ -88,13 +88,26 @@ for target in "son" "laminB1" "laminB1_DamID"; do
         else
             index_prefix="$m_index_prefix"
         fi
-        $bwa_path mem -t 8 $index_prefix "$input_file" > "$filename".sam
-        $samtools_path view -bS -@ 8 "$filename".sam > "$filename".bam
-        rm "$filename.sam"
-        $samtools_path sort -@ 8 "$filename".bam -o "$filename"_sort.bam
-        $samtools_path markdup -r "$filename"_sort.bam "$filename"_rmdup.bam
-        $samtools_path index "$filename"_rmdup.bam
-        rm "$filename".fastq.gz; rm "$filename".bam; rm "$filename"_sort.bam
+
+        if [[ "$target" == *"DamID" ]]; then
+            # Global alignment with DamID data yielded very low alignment rates (~10-20%).
+            # Switching to local yielded rates more comparable to global alignment of the TSA-seq data.
+            $bt2_path --local --very-sensitive-local -x "$index_prefix" -U "$input_file" -p 20 --no-unal |\
+            $samtools_path view -b -h -@ 20 - |\
+            $samtools_path sort -@ 20 - -o "$filename"_rmdup.bam
+            $samtools_path index -@ 20 "$filename"_rmdup.bam
+        else
+            $bt2_path --very-sensitive -x "$index_prefix" -U "$input_file" -p 20 --no-unal |\
+            $samtools_path view -b -h -@ 20 - |\
+            $samtools_path collate -O -@ 20 - |\
+            $samtools_path fixmate -@ 20 -m - - |\
+            $samtools_path sort -@ 20 - |\
+            $samtools_path markdup -r -@ 20 - "$filename"_rmdup.bam
+            $samtools_path index -@ 20 "$filename"_rmdup.bam
+        fi
+
+        rm "$filename".fastq.gz
+
     done
     cd ..
     echo

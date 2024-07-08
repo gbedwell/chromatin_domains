@@ -16,9 +16,9 @@ for target in "son" "laminB1" "laminB1_DamID"; do
             pulldown="${type}_pulldown_replicate_${rep}_rmdup.bam"
 
             if [[ "$filename" == *"K562"* ]]; then
-                chrom_sizes="../chm13v2.0_noM_noY_chrom.sizes"
+                chrom_sizes="/mnt/storage/labs/aengelman/T2T/annotations/chm13v2.0_noM_noY_chrom.sizes"
             else
-                chrom_sizes="../chm13v2.0_noM_chrom.sizes"
+                chrom_sizes="/mnt/storage/labs/aengelman/T2T/annotations/chm13v2.0_noM_chrom.sizes"
             fi
 
             $python2 normalize_TSA-seq.py \
@@ -37,9 +37,9 @@ for target in "son" "laminB1" "laminB1_DamID"; do
         prefix=${name%_*}
 
         if [[ "$name" == *"K562"* ]]; then
-            chrom_sizes="../chm13v2.0_noM_noY_chrom.sizes"
+            chrom_sizes="/mnt/storage/labs/aengelman/T2T/annotations/chm13v2.0_noM_noY_chrom.sizes"
         else
-            chrom_sizes="../chm13v2.0_noM_chrom.sizes"
+            chrom_sizes="/mnt/storage/labs/aengelman/T2T/annotations/chm13v2.0_noM_chrom.sizes"
         fi
 
         $python2 TSA_smooth.py \
